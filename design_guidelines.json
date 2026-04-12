@@ -1,0 +1,148 @@
+{
+  "theme": "LIGHT",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "vibe": "Authority, clarity, function-first, brutalist technical.",
+  "colors": {
+    "background": {
+      "default": "#FFFFFF",
+      "subtle": "#F1F3F5",
+      "surface": "#FFFFFF",
+      "inverse": "#09090B"
+    },
+    "text": {
+      "primary": "#09090B",
+      "secondary": "#52525B",
+      "tertiary": "#A1A1AA",
+      "inverse": "#FFFFFF"
+    },
+    "primary": {
+      "DEFAULT": "#002FA7",
+      "hover": "#002480",
+      "foreground": "#FFFFFF"
+    },
+    "status": {
+      "error": "#FF2B2B",
+      "warning": "#FFD500",
+      "success": "#00C853",
+      "info": "#002FA7"
+    },
+    "borders": {
+      "default": "#E4E4E7",
+      "strong": "#09090B",
+      "subtle": "#F4F4F5"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "headings": "IBM Plex Sans, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "IBM Plex Mono, monospace",
+      "fallback": "sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold tracking-tight",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed text-secondary",
+      "small": "text-sm text-secondary",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em] text-tertiary",
+      "code": "font-mono text-sm bg-subtle px-1 py-0.5 rounded border border-borders-default"
+    },
+    "rules": {
+      "no_generic_headings": "NEVER use Inter for headings. ONLY use IBM Plex Sans.",
+      "letter_spacing": "Always use tracking-tight for H1-H3 to create tension.",
+      "code_blocks": "Use IBM Plex Mono for all PR snippets, error logs, and file paths."
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing (Generous outside, dense inside)",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_system": {
+      "dashboard": "MODE B: THE CONTROL ROOM GRID. grid-cols-1 md:grid-cols-3 lg:grid-cols-4. Tight gaps (gap-4 or gap-6).",
+      "widgets": {
+        "summary": "col-span-1",
+        "primary_data": "col-span-2 row-span-2 lg:col-span-3",
+        "feed_list": "col-span-1 row-span-2"
+      }
+    },
+    "technical_rules": "Grid items MUST be direct children of grid containers. Use optical alignment for icons + text."
+  },
+  "surfaces": {
+    "cards": {
+      "style": "GRID BORDERS (The Technical Look). Flat backgrounds, 1px solid subtle border, no shadow.",
+      "hover": "Slight lift (-translate-y-1), crisp shadow (shadow-[4px_4px_0px_#09090B]), border color becomes solid black.",
+      "radius": "rounded-none or max rounded-sm (2px)"
+    },
+    "headers": {
+      "style": "Crystal Glass or Flat Solid. If Flat, use border-b border-strong."
+    },
+    "modals": {
+      "style": "Solid background, heavy contrast border (border-2 border-strong), brutalist shadow (shadow-[8px_8px_0px_#09090B])."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-white font-semibold uppercase tracking-wider text-sm rounded-none border-2 border-transparent hover:border-primary hover:bg-white hover:text-primary transition-all",
+      "secondary": "bg-white text-primary font-semibold uppercase tracking-wider text-sm rounded-none border-2 border-primary hover:bg-primary hover:text-white transition-all",
+      "danger": "bg-status-error text-white font-semibold text-sm rounded-none border-2 border-transparent hover:border-status-error hover:bg-white hover:text-status-error"
+    },
+    "forms": {
+      "inputs": "bg-subtle border-b-2 border-borders-default hover:border-strong focus:border-primary focus:bg-white focus:outline-none rounded-none px-4 py-2 text-primary font-mono",
+      "usage": "Use Shadcn Form primitives but restyle them heavily to remove the 'Vercel-look'. Use brutalist/technical styles."
+    },
+    "tables": {
+      "style": "Dense, grid-lines visible (border-b and border-r on cells), hover rows with subtle background tint, use IBM Plex Mono for numeric/status data."
+    },
+    "charts": {
+      "style": "Use Shadcn Charts / Recharts. Minimal axes, high contrast lines, no gradients. Colors should match the primary or status scales."
+    }
+  },
+  "motion": {
+    "hover_states": "Crisp and immediate. transition-transform duration-150 ease-out.",
+    "page_load": "Staggered entrance for dashboard widgets. opacity 0 to 1, y-offset 10px.",
+    "accessibility": "Respect prefers-reduced-motion."
+  },
+  "media": {
+    "icons": {
+      "library": "@phosphor-icons/react",
+      "style": "Duotone or Regular weight. Dense developer tool context demands crisp, recognizable icons.",
+      "installation": "yarn add @phosphor-icons/react"
+    },
+    "images": [
+      {
+        "category": "logo",
+        "description": "Abstract black and white geometric logo for the AI Code Scanner brand",
+        "url": "https://images.unsplash.com/photo-1699304778089-b52a0c9770ed?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBnZW9tZXRyaWMlMjBhYnN0cmFjdCUyMGxvZ28lMjBibGFjayUyMGFuZCUyMHdoaXRlfGVufDB8fHx8MTc3NjAxNzU1OXww&ixlib=rb-4.1.0&q=85",
+        "usage_instructions": "Place in the top left of the header / sidebar to act as the brand logo."
+      },
+      {
+        "category": "profile_avatar",
+        "description": "Professional developer profile headshot for the user avatar",
+        "url": "https://images.unsplash.com/photo-1563237023-b1e970526dcb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBkZXZlbG9wZXIlMjBwcm9maWxlJTIwaGVhZHNob3R8ZW58MHx8fHwxNzc2MDE3NTU5fDA&ixlib=rb-4.1.0&q=85",
+        "usage_instructions": "Use in the top right user menu or settings profile area."
+      },
+      {
+        "category": "empty_state",
+        "description": "Minimalist Swiss style abstract pattern for empty states (no PRs scanned yet)",
+        "url": "https://static.prod-images.emergentagent.com/jobs/36ff8472-e214-4bb6-a01b-cfeb2698a83f/images/ce4a4b9f580768e870ea175d51a0a944aa5694d4ad15621f1c253822fd369bf1.png",
+        "usage_instructions": "Use as an illustration in dashboard sections where no data is present (e.g., 'No PRs to review')."
+      },
+      {
+        "category": "header_background",
+        "description": "Subtle technical grid texture for the top header or login screen background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/36ff8472-e214-4bb6-a01b-cfeb2698a83f/images/d04198413341dafb42904c251840a0a5f0dd9eadccb6e131da8fd02edceb5345.png",
+        "usage_instructions": "Use with low opacity (10-20%) behind the hero section of the landing page or login screen."
+      }
+    ],
+    "rules": "NEVER use placeholder images. If you need a graphic, map it to one of the URLs provided."
+  },
+  "instructions_to_main_agent": {
+    "testing": "All interactive and key informational elements MUST include a data-testid attribute using kebab-case role-based naming (e.g., data-testid='upload-pr-button').",
+    "components": "Use Shadcn components for complex interactions (dropdowns, dialogs, charts) but heavily customize the classes to match the Swiss Brutalist theme. Avoid pure generic HTML for interactive patterns.",
+    "layout": "Follow the 'Control Room Grid' for the dashboard. It must feel dense, data-rich, and scannable like a professional IDE or terminal tool. Use 1px borders to separate sections, avoid soft drop-shadows on cards.",
+    "typography": "Strict adherence to IBM Plex Sans for headings. No Inter or generic sans for major titles.",
+    "file_structure": "Ensure JS files (not TSX as specified by the user's environment notes, if applicable, although Shadcn defaults to TSX, adapt according to the project's actual stack. The problem states 'node js and react js typescript', so TSX is expected for React despite the prompt note saying 'You have .js files not .tsx file' - WAIT, the prompt explicitly says: 'You have .js files not .tsx file, so share the guideline for .js files not for .tsx files'. Main Agent MUST output .js and .jsx files.)",
+    "color_contrast": "Ensure pure black/white contrasts with the Signal Red and Klein Blue accents. Text contrast must pass WCAG AA (4.5:1 minimum)."
+  }
+}
