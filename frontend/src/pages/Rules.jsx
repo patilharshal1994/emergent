@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, Trash, ToggleLeft, ToggleRight, Pencil } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, Trash, ToggleLeft, ToggleRight, Export, UploadSimple } from '@phosphor-icons/react';
 import Header from '../components/Header';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -12,7 +12,8 @@ const CATEGORY_LABELS = {
   'code-quality': 'Code Quality',
   'security': 'Security',
   'typescript': 'TypeScript',
-  'custom': 'Custom'
+  'custom': 'Custom',
+  'eslint': 'ESLint'
 };
 
 const Rules = () => {
@@ -30,6 +31,7 @@ const Rules = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const importInputRef = useRef(null);
 
   useEffect(() => {
     fetchRules();
@@ -102,6 +104,50 @@ const Rules = () => {
     }
   };
 
+  const exportRules = async () => {
+    try {
+      const response = await axios.get(`${API}/rules/export`);
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `qualitygate-rules-${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setSuccess('Rules exported successfully');
+      setTimeout(() => setSuccess(''), 2000);
+    } catch (err) {
+      setError('Error exporting rules');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const importRules = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/rules/import`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setSuccess(`${response.data.message}`);
+      fetchRules();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Error importing rules');
+      setTimeout(() => setError(''), 3000);
+    }
+
+    // Reset file input
+    if (importInputRef.current) importInputRef.current.value = '';
+  };
+
   const getSeverityBadgeClass = (severity) => `badge badge-${severity}`;
 
   const groupedRules = rules.reduce((acc, rule) => {
@@ -135,14 +181,38 @@ const Rules = () => {
                 Configure which rules to enforce. Toggle rules on/off, adjust severity, or create custom pattern-based rules.
               </p>
             </div>
-            <button
-              data-testid="create-rule-button"
-              onClick={() => setShowCreate(!showCreate)}
-              className="btn btn-primary"
-            >
-              <Plus size={20} className="inline mr-2" />
-              {showCreate ? 'CANCEL' : 'NEW RULE'}
-            </button>
+            <div className="flex gap-3 items-start flex-shrink-0">
+              <button
+                data-testid="export-rules-button"
+                onClick={exportRules}
+                className="btn btn-secondary"
+              >
+                <Export size={20} className="inline mr-2" />
+                EXPORT
+              </button>
+              <label
+                data-testid="import-rules-button"
+                className="btn btn-secondary cursor-pointer inline-flex items-center"
+              >
+                <UploadSimple size={20} className="inline mr-2" />
+                IMPORT
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={importRules}
+                  className="hidden"
+                />
+              </label>
+              <button
+                data-testid="create-rule-button"
+                onClick={() => setShowCreate(!showCreate)}
+                className="btn btn-primary"
+              >
+                <Plus size={20} className="inline mr-2" />
+                {showCreate ? 'CANCEL' : 'NEW RULE'}
+              </button>
+            </div>
           </div>
         </div>
 

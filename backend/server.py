@@ -311,6 +311,68 @@ async def delete_rule(rule_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api_router.get("/rules/export")
+async def export_rules():
+    """Export all rules as JSON for backup/sharing"""
+    try:
+        rules = await db.rules.find({}, {"_id": 0}).to_list(200)
+        export_data = {
+            "version": "2.0",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "rules_count": len(rules),
+            "rules": rules,
+        }
+        return JSONResponse(content=export_data)
+    except Exception as e:
+        logging.error(f"Error exporting rules: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/rules/import")
+async def import_rules(file: UploadFile = File(...)):
+    """Import rules from a JSON file"""
+    try:
+        content = await file.read()
+        data = json.loads(content)
+
+        imported_rules = data.get("rules", [])
+        if not imported_rules:
+            raise HTTPException(status_code=400, detail="No rules found in import file")
+
+        imported_count = 0
+        skipped_count = 0
+
+        for rule in imported_rules:
+            rule_id = rule.get("rule_id")
+            if not rule_id:
+                skipped_count += 1
+                continue
+
+            existing = await db.rules.find_one({"rule_id": rule_id})
+            if existing:
+                # Update existing rule
+                update_fields = {k: v for k, v in rule.items() if k != "rule_id"}
+                await db.rules.update_one({"rule_id": rule_id}, {"$set": update_fields})
+                imported_count += 1
+            else:
+                # Insert new rule
+                await db.rules.insert_one({**rule})
+                imported_count += 1
+
+        return JSONResponse(content={
+            "message": f"Imported {imported_count} rules, skipped {skipped_count}",
+            "imported": imported_count,
+            "skipped": skipped_count,
+        })
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error importing rules: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 async def _get_enabled_custom_rules():
     """Get enabled custom pattern rules from DB"""
     rules = await db.rules.find({"enabled": True, "pattern": {"$ne": None}}, {"_id": 0}).to_list(100)

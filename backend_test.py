@@ -562,9 +562,261 @@ def risky_operation():
                 return False
         return False
 
+    # ═══════════════════════════════════════════
+    # NEW FEATURES TESTING (ITERATION 3) - ESLint Integration & Rule Import/Export
+    # ═══════════════════════════════════════════
+
+    def create_eslint_test_js_file(self):
+        """Create a test JavaScript file specifically for ESLint testing"""
+        test_code = """var x = 1;
+console.log(x);
+if (x == 1) {
+    var y = 2;
+}
+var unused = "not used";
+function test() {
+    if (x == 1) {
+        return true;
+    }
+}
+"""
+        return test_code
+
+    def test_eslint_integration_scan(self):
+        """Test ESLint integration with specific JS file containing ESLint issues"""
+        # Create test file with specific ESLint issues
+        js_content = self.create_eslint_test_js_file()
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as js_file:
+            js_file.write(js_content)
+            js_file_path = js_file.name
+
+        try:
+            # Prepare files for upload
+            files = [
+                ('files', ('eslint_test.js', open(js_file_path, 'rb'), 'text/javascript'))
+            ]
+            
+            data = {'enable_ai': 'false'}  # Disable AI for faster testing
+            
+            success, response = self.run_test(
+                "ESLint Integration Scan",
+                "POST",
+                "scan/upload",
+                200,
+                data=data,
+                files=files
+            )
+            
+            # Close file
+            files[0][1][1].close()
+            
+            if success and 'issues' in response:
+                issues = response['issues']
+                eslint_issues = [issue for issue in issues if issue.get('rule_id', '').startswith('eslint/')]
+                
+                print(f"   Total issues found: {len(issues)}")
+                print(f"   ESLint issues found: {len(eslint_issues)}")
+                
+                # Check for specific ESLint rules
+                eslint_rules_found = set()
+                for issue in eslint_issues:
+                    rule_id = issue.get('rule_id', '')
+                    if rule_id.startswith('eslint/'):
+                        eslint_rules_found.add(rule_id.replace('eslint/', ''))
+                        print(f"   Found ESLint rule: {rule_id}")
+                
+                # Expected ESLint rules for our test code
+                expected_rules = {'no-unused-vars', 'eqeqeq', 'no-var'}
+                found_expected = eslint_rules_found.intersection(expected_rules)
+                
+                if len(found_expected) >= 2:  # At least 2 of the expected rules
+                    print(f"   ✅ Found expected ESLint rules: {found_expected}")
+                    self.eslint_scan_id = response.get('scan_id')
+                    return True
+                else:
+                    print(f"   ❌ Expected ESLint rules {expected_rules}, found {eslint_rules_found}")
+                    return False
+            return False
+            
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(js_file_path)
+            except:
+                pass
+
+    def test_combined_pattern_eslint_scan(self):
+        """Test that scan returns both pattern-based AND ESLint issues, deduped"""
+        # Create test file with both pattern issues and ESLint issues
+        js_content = """var x = 1;
+console.log("Debug message");  // Pattern issue: console statement
+if (x == 1) {  // ESLint issue: eqeqeq
+    debugger;  // Pattern issue: debugger statement
+}
+var unused = "not used";  // ESLint issue: no-unused-vars
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as js_file:
+            js_file.write(js_content)
+            js_file_path = js_file.name
+
+        try:
+            files = [
+                ('files', ('combined_test.js', open(js_file_path, 'rb'), 'text/javascript'))
+            ]
+            
+            data = {'enable_ai': 'false'}
+            
+            success, response = self.run_test(
+                "Combined Pattern + ESLint Scan",
+                "POST",
+                "scan/upload",
+                200,
+                data=data,
+                files=files
+            )
+            
+            files[0][1][1].close()
+            
+            if success and 'issues' in response:
+                issues = response['issues']
+                eslint_issues = [issue for issue in issues if issue.get('rule_id', '').startswith('eslint/')]
+                pattern_issues = [issue for issue in issues if not issue.get('rule_id', '').startswith('eslint/')]
+                
+                print(f"   Total issues: {len(issues)}")
+                print(f"   ESLint issues: {len(eslint_issues)}")
+                print(f"   Pattern issues: {len(pattern_issues)}")
+                
+                # Should have both types of issues
+                if len(eslint_issues) > 0 and len(pattern_issues) > 0:
+                    print("   ✅ Found both ESLint and pattern-based issues")
+                    return True
+                else:
+                    print("   ❌ Missing either ESLint or pattern-based issues")
+                    return False
+            return False
+            
+        finally:
+            try:
+                os.unlink(js_file_path)
+            except:
+                pass
+
+    def test_rules_export(self):
+        """Test GET /api/rules/export - export rules as JSON"""
+        success, response = self.run_test(
+            "Rules Export",
+            "GET",
+            "rules/export",
+            200
+        )
+        
+        if success:
+            required_fields = ['version', 'exported_at', 'rules_count', 'rules']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                rules_count = response.get('rules_count', 0)
+                rules_array = response.get('rules', [])
+                
+                print(f"   ✅ Export format valid")
+                print(f"   Version: {response.get('version')}")
+                print(f"   Rules count: {rules_count}")
+                print(f"   Actual rules array length: {len(rules_array)}")
+                
+                if rules_count == len(rules_array) and rules_count > 0:
+                    print("   ✅ Rules count matches array length")
+                    # Store export data for import test
+                    self.export_data = response
+                    return True
+                else:
+                    print(f"   ❌ Rules count mismatch: {rules_count} vs {len(rules_array)}")
+                    return False
+            else:
+                print(f"   ❌ Missing required fields: {missing_fields}")
+                return False
+        return False
+
+    def test_rules_import(self):
+        """Test POST /api/rules/import - import rules from JSON file"""
+        if not hasattr(self, 'export_data'):
+            print("❌ No export data available for import test")
+            return False
+        
+        # Create a temporary JSON file with export data
+        import_data = {
+            "version": "2.0",
+            "exported_at": datetime.now().isoformat(),
+            "rules_count": 1,
+            "rules": [
+                {
+                    "rule_id": "test-import-rule",
+                    "name": "Test Import Rule",
+                    "description": "Test rule for import functionality",
+                    "severity": "medium",
+                    "enabled": True,
+                    "pattern": "TEST_PATTERN",
+                    "file_types": [".js"],
+                    "category": "custom"
+                }
+            ]
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as json_file:
+            json.dump(import_data, json_file)
+            json_file_path = json_file.name
+
+        try:
+            # Prepare file for upload
+            files = [
+                ('file', ('test_rules.json', open(json_file_path, 'rb'), 'application/json'))
+            ]
+            
+            success, response = self.run_test(
+                "Rules Import",
+                "POST",
+                "rules/import",
+                200,
+                files=files
+            )
+            
+            files[0][1][1].close()
+            
+            if success:
+                required_fields = ['message', 'imported', 'skipped']
+                missing_fields = [field for field in required_fields if field not in response]
+                
+                if not missing_fields:
+                    imported = response.get('imported', 0)
+                    skipped = response.get('skipped', 0)
+                    
+                    print(f"   ✅ Import response valid")
+                    print(f"   Imported: {imported}")
+                    print(f"   Skipped: {skipped}")
+                    print(f"   Message: {response.get('message')}")
+                    
+                    if imported > 0:
+                        print("   ✅ Successfully imported rules")
+                        return True
+                    else:
+                        print("   ❌ No rules were imported")
+                        return False
+                else:
+                    print(f"   ❌ Missing response fields: {missing_fields}")
+                    return False
+            return False
+            
+        finally:
+            try:
+                os.unlink(json_file_path)
+            except:
+                pass
+
 def main():
-    print("🚀 Starting Code Quality API Tests - ITERATION 2 (New Features)")
-    print("=" * 70)
+    print("🚀 Starting Code Quality API Tests - ITERATION 3 (ESLint Integration & Rule Import/Export)")
+    print("=" * 80)
     
     # Setup
     tester = CodeQualityAPITester()
@@ -573,28 +825,20 @@ def main():
     core_tests = [
         tester.test_health_endpoint,
         tester.test_root_endpoint,
-        tester.test_file_upload_scan,  # Need this to generate data for analytics
     ]
     
-    # Run new feature tests
+    # NEW FEATURES TESTS (ITERATION 3)
     new_feature_tests = [
-        tester.test_get_rules,
-        tester.test_create_custom_rule,
-        tester.test_verify_custom_rule_in_list,
-        tester.test_toggle_rule_enabled,
-        tester.test_change_rule_severity,
-        tester.test_delete_custom_rule,
-        tester.test_delete_builtin_rule_fails,
-        tester.test_analytics_trends,
-        tester.test_webhook_config,
-        tester.test_update_webhook_config,
-        tester.test_github_actions_yaml,
+        tester.test_eslint_integration_scan,
+        tester.test_combined_pattern_eslint_scan,
+        tester.test_rules_export,
+        tester.test_rules_import,
     ]
     
     all_tests = core_tests + new_feature_tests
     failed_tests = []
     
-    print("🔧 Running Core Tests (for data generation)...")
+    print("🔧 Running Core Tests...")
     print("-" * 50)
     
     for test in core_tests:
@@ -605,8 +849,8 @@ def main():
             print(f"❌ Test {test.__name__} crashed: {str(e)}")
             failed_tests.append(test.__name__)
     
-    print("\n🆕 Running New Feature Tests...")
-    print("-" * 50)
+    print("\n🆕 Running NEW Feature Tests (ESLint Integration & Rule Import/Export)...")
+    print("-" * 70)
     
     for test in new_feature_tests:
         try:
@@ -617,7 +861,7 @@ def main():
             failed_tests.append(test.__name__)
     
     # Print results
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 80)
     print(f"📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
     
     if failed_tests:
