@@ -1,34 +1,198 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #FFFFFF;
+  color: #09090B;
+  line-height: 1.6;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 
-.App-link {
-    color: #61dafb;
+code, pre {
+  font-family: 'IBM Plex Mono', monospace;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.App {
+  min-height: 100vh;
+  background: #F1F3F5;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+.btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  border-radius: 0;
+}
+
+.btn-primary {
+  background: #002FA7;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background: #FFFFFF;
+  color: #002FA7;
+  border-color: #002FA7;
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: #002FA7;
+  border-color: #002FA7;
+}
+
+.btn-secondary:hover {
+  background: #002FA7;
+  color: #FFFFFF;
+}
+
+.btn-danger {
+  background: #FF2B2B;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.btn-danger:hover {
+  background: #FFFFFF;
+  color: #FF2B2B;
+  border-color: #FF2B2B;
+}
+
+.card {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  padding: 1.5rem;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px #09090B;
+  border-color: #09090B;
+}
+
+.input {
+  background: #F1F3F5;
+  border: none;
+  border-bottom: 2px solid #E4E4E7;
+  padding: 0.75rem 1rem;
+  font-family: 'IBM Plex Mono', monospace;
+  color: #09090B;
+  width: 100%;
+  transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+
+.input:hover {
+  border-bottom-color: #09090B;
+}
+
+.input:focus {
+  outline: none;
+  border-bottom-color: #002FA7;
+  background: #FFFFFF;
+}
+
+.severity-critical {
+  border-left: 4px solid #FF2B2B;
+}
+
+.severity-high {
+  border-left: 4px solid #FFD500;
+}
+
+.severity-medium {
+  border-left: 4px solid #002FA7;
+}
+
+.severity-low {
+  border-left: 4px solid #00C853;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid;
+}
+
+.badge-critical {
+  background: #FF2B2B;
+  color: #FFFFFF;
+  border-color: #FF2B2B;
+}
+
+.badge-high {
+  background: #FFD500;
+  color: #09090B;
+  border-color: #FFD500;
+}
+
+.badge-medium {
+  background: #002FA7;
+  color: #FFFFFF;
+  border-color: #002FA7;
+}
+
+.badge-low {
+  background: #00C853;
+  color: #FFFFFF;
+  border-color: #00C853;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.spinner {
+  border: 4px solid #E4E4E7;
+  border-top: 4px solid #002FA7;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
