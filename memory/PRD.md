@@ -6,60 +6,36 @@ Engineering manager needs a tool to automate code review tasks: checking for syn
 ## Architecture
 - **Backend**: FastAPI (Python) on port 8001 with /api prefix
 - **Frontend**: React on port 3000
-- **Database**: MongoDB (scan history, results)
-- **AI**: GPT-5.2 via Emergent LLM key for fix suggestions
+- **Database**: MongoDB (scan history, rules, webhook config)
+- **AI**: GPT-5.2 via Emergent LLM key
 - **GitHub**: PyGithub for PR integration
 
-## User Personas
-- Engineering Managers reviewing PRs
-- Developers scanning code before committing
-- Teams enforcing coding standards
+## What's Been Implemented
 
-## Core Requirements (Static)
-- Multi-language code scanning (JS/TS/Python)
-- Security vulnerability detection (exposed secrets)
-- AI-powered fix suggestions
-- GitHub PR integration
-- Interactive web dashboard with filtering
-- Downloadable reports (JSON/HTML)
-- CLI tool for terminal usage
-- Scan history tracking
+### Phase 1 (April 12, 2026)
+- [x] File/folder upload scanning
+- [x] Paste code scanning
+- [x] GitHub PR scanning
+- [x] 15+ scanning rules (JS/TS/Python)
+- [x] AI-powered fix suggestions (GPT-5.2)
+- [x] Interactive results dashboard with filtering
+- [x] Downloadable reports (JSON/HTML)
+- [x] Scan history tracking
+- [x] CLI tool
 
-## What's Been Implemented (April 2026)
-- [x] Full backend API (scan/upload, scan/github-pr, history, download)
-- [x] Code scanner engine (15+ rule types across JS/TS/Python)
-- [x] AI suggestion service (GPT-5.2 via Emergent LLM)
-- [x] GitHub PR integration (PyGithub)
-- [x] Web dashboard (3 tabs: Upload/Folder, Paste Code, GitHub PR)
-- [x] Scan results page (severity filter, search, issue cards with AI suggestions)
-- [x] Scan history page
-- [x] Report download (JSON/HTML)
-- [x] CLI tool with Rich output
-- [x] Live dashboard stats
-- [x] Swiss Brutalist design (IBM Plex Sans, high contrast)
+### Phase 2 (April 13, 2026)
+- [x] CI/CD Integration: GitHub Actions webhook endpoint, auto-scan on PR creation, webhook config management, YAML generator
+- [x] Custom Rule Configuration: CRUD endpoints, toggle rules on/off, change severity levels, create custom regex pattern rules, category grouping
+- [x] Analytics Dashboard: Issues over time (line chart), severity distribution (donut chart), most common issues (bar chart), aggregate stats
 
-## Prioritized Backlog
-### P0 (Done)
-- File/folder upload scanning
-- Code quality checks (console, debugger, var, secrets, eval)
-- AI fix suggestions
-- Web dashboard + results + history
-
+## Backlog
 ### P1 (Next)
-- Custom rule configuration UI
-- CI/CD pipeline integration (GitHub Actions, GitLab CI)
 - Slack/Teams notifications on scan completion
-- Code quality trends and analytics charts
+- ESLint deep integration for JS/TS
+- Rule import/export
 
 ### P2 (Future)
-- Multi-repository dashboard
-- Team collaboration (shared rules, comments)
-- Webhook support for auto-scanning on push
+- Multi-repo dashboard
+- Team collaboration
 - IDE extension (VS Code)
-- ESLint/Prettier deep integration
-
-## Next Tasks
-1. Add custom rule configuration page
-2. Add CI/CD integration support
-3. Add code quality trend analytics
-4. Add more language support (Java, Go, Ruby)
+- More languages (Java, Go, Ruby)
