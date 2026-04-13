@@ -31,6 +31,11 @@ class CodeQualityAPITester:
                 else:
                     headers['Content-Type'] = 'application/json'
                     response = requests.post(url, json=data, headers=headers)
+            elif method == 'PUT':
+                headers['Content-Type'] = 'application/json'
+                response = requests.put(url, json=data, headers=headers)
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers)
 
             success = response.status_code == expected_status
             if success:
@@ -308,28 +313,302 @@ def risky_operation():
             print(f"❌ Failed - Error: {str(e)}")
             return False
 
+    # ═══════════════════════════════════════════
+    # NEW FEATURES TESTING (ITERATION 2)
+    # ═══════════════════════════════════════════
+
+    def test_get_rules(self):
+        """Test GET /api/rules - should return 11 default rules"""
+        success, response = self.run_test(
+            "Get Rules (Default 11 rules)",
+            "GET",
+            "rules",
+            200
+        )
+        
+        if success and 'rules' in response:
+            rules = response['rules']
+            print(f"   Found {len(rules)} rules")
+            if len(rules) >= 11:
+                default_rules = [r for r in rules if r.get('category') != 'custom']
+                print(f"   Default rules: {len(default_rules)}")
+                if len(default_rules) == 11:
+                    print("   ✅ Correct number of default rules (11)")
+                    return True
+                else:
+                    print(f"   ❌ Expected 11 default rules, got {len(default_rules)}")
+                    return False
+            else:
+                print(f"   ❌ Expected at least 11 rules, got {len(rules)}")
+                return False
+        return False
+
+    def test_create_custom_rule(self):
+        """Test POST /api/rules - create a new custom rule"""
+        rule_data = {
+            "name": "No TODO Comments",
+            "description": "Detect TODO comments in code",
+            "severity": "low",
+            "pattern": "TODO|FIXME|HACK",
+            "file_types": [".js", ".jsx", ".ts", ".tsx"],
+            "category": "custom"
+        }
+        
+        success, response = self.run_test(
+            "Create Custom Rule",
+            "POST",
+            "rules",
+            200,
+            data=rule_data
+        )
+        
+        if success and 'rule_id' in response:
+            self.custom_rule_id = response['rule_id']
+            print(f"   Created rule ID: {self.custom_rule_id}")
+            return True
+        return False
+
+    def test_verify_custom_rule_in_list(self):
+        """Test that custom rule appears in GET /api/rules"""
+        success, response = self.run_test(
+            "Verify Custom Rule in List",
+            "GET",
+            "rules",
+            200
+        )
+        
+        if success and 'rules' in response:
+            rules = response['rules']
+            custom_rules = [r for r in rules if r.get('category') == 'custom']
+            print(f"   Found {len(custom_rules)} custom rules")
+            if len(custom_rules) > 0:
+                print("   ✅ Custom rule found in rules list")
+                return True
+            else:
+                print("   ❌ No custom rules found")
+                return False
+        return False
+
+    def test_toggle_rule_enabled(self):
+        """Test PUT /api/rules/{rule_id} - toggle enabled state"""
+        # Test with 'no-console' rule
+        rule_id = "no-console"
+        
+        success, response = self.run_test(
+            "Toggle Rule Enabled (no-console)",
+            "PUT",
+            f"rules/{rule_id}",
+            200,
+            data={"enabled": False}
+        )
+        
+        if success:
+            print("   ✅ Successfully toggled rule enabled state")
+            return True
+        return False
+
+    def test_change_rule_severity(self):
+        """Test PUT /api/rules/{rule_id} - change severity"""
+        # Test changing 'no-console' from low to high
+        rule_id = "no-console"
+        
+        success, response = self.run_test(
+            "Change Rule Severity (no-console low->high)",
+            "PUT",
+            f"rules/{rule_id}",
+            200,
+            data={"severity": "high"}
+        )
+        
+        if success:
+            print("   ✅ Successfully changed rule severity")
+            return True
+        return False
+
+    def test_delete_custom_rule(self):
+        """Test DELETE /api/rules/{custom_rule_id} - delete custom rule"""
+        if not hasattr(self, 'custom_rule_id'):
+            print("❌ No custom rule ID available for deletion test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Custom Rule",
+            "DELETE",
+            f"rules/{self.custom_rule_id}",
+            200
+        )
+        
+        if success:
+            print("   ✅ Successfully deleted custom rule")
+            return True
+        return False
+
+    def test_delete_builtin_rule_fails(self):
+        """Test DELETE /api/rules/no-console - should fail (cannot delete built-in)"""
+        url = f"{self.api_url}/rules/no-console"
+        self.tests_run += 1
+        print(f"\n🔍 Testing Delete Built-in Rule (Expected to fail)...")
+        
+        try:
+            response = requests.delete(url)
+            
+            # Should fail with 400 because built-in rules cannot be deleted
+            if response.status_code == 400:
+                try:
+                    error_data = response.json()
+                    if 'Cannot delete built-in rules' in error_data.get('detail', ''):
+                        self.tests_passed += 1
+                        print(f"✅ Passed - Status: {response.status_code}")
+                        print("   ✅ Expected failure - Cannot delete built-in rules")
+                        return True
+                except:
+                    pass
+            
+            print(f"❌ Failed - Expected 400 with built-in rule error, got {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data}")
+            except:
+                print(f"   Error: {response.text}")
+            return False
+                
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_analytics_trends(self):
+        """Test GET /api/analytics/trends - get analytics data"""
+        success, response = self.run_test(
+            "Analytics Trends",
+            "GET",
+            "analytics/trends",
+            200
+        )
+        
+        if success:
+            required_fields = ['trends', 'severity_distribution', 'top_issues', 'totals']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                print("   ✅ All required analytics fields present")
+                print(f"   Trends count: {len(response.get('trends', []))}")
+                print(f"   Severity distribution: {len(response.get('severity_distribution', []))}")
+                print(f"   Top issues: {len(response.get('top_issues', []))}")
+                return True
+            else:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                return False
+        return False
+
+    def test_webhook_config(self):
+        """Test GET /api/webhook/config - get webhook configuration"""
+        success, response = self.run_test(
+            "Webhook Config",
+            "GET",
+            "webhook/config",
+            200
+        )
+        
+        if success:
+            required_fields = ['webhook_url', 'webhook_secret', 'enabled']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                print("   ✅ All required webhook config fields present")
+                print(f"   Webhook URL: {response.get('webhook_url', '')[:50]}...")
+                print(f"   Enabled: {response.get('enabled')}")
+                return True
+            else:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                return False
+        return False
+
+    def test_update_webhook_config(self):
+        """Test PUT /api/webhook/config - toggle enabled to false"""
+        success, response = self.run_test(
+            "Update Webhook Config (enabled=false)",
+            "PUT",
+            "webhook/config",
+            200,
+            data={"enabled": False}
+        )
+        
+        if success and 'enabled' in response:
+            if response['enabled'] == False:
+                print("   ✅ Successfully disabled webhook")
+                return True
+            else:
+                print(f"   ❌ Expected enabled=false, got {response['enabled']}")
+                return False
+        return False
+
+    def test_github_actions_yaml(self):
+        """Test GET /api/webhook/github-actions-yaml - get YAML content"""
+        success, response = self.run_test(
+            "GitHub Actions YAML",
+            "GET",
+            "webhook/github-actions-yaml",
+            200
+        )
+        
+        if success and 'yaml' in response:
+            yaml_content = response['yaml']
+            if 'name: CodeQuality Gate Scan' in yaml_content and 'on:' in yaml_content:
+                print("   ✅ Valid GitHub Actions YAML content")
+                print(f"   YAML length: {len(yaml_content)} characters")
+                return True
+            else:
+                print("   ❌ Invalid YAML content structure")
+                return False
+        return False
+
 def main():
-    print("🚀 Starting Code Quality API Tests")
-    print("=" * 50)
+    print("🚀 Starting Code Quality API Tests - ITERATION 2 (New Features)")
+    print("=" * 70)
     
     # Setup
     tester = CodeQualityAPITester()
     
-    # Run all tests
-    tests = [
+    # Run core tests first (to ensure basic functionality)
+    core_tests = [
         tester.test_health_endpoint,
         tester.test_root_endpoint,
-        tester.test_file_upload_scan,
-        tester.test_scan_history,
-        tester.test_scan_details,
-        tester.test_download_json_report,
-        tester.test_download_html_report,
-        tester.test_github_pr_scan,
+        tester.test_file_upload_scan,  # Need this to generate data for analytics
     ]
     
+    # Run new feature tests
+    new_feature_tests = [
+        tester.test_get_rules,
+        tester.test_create_custom_rule,
+        tester.test_verify_custom_rule_in_list,
+        tester.test_toggle_rule_enabled,
+        tester.test_change_rule_severity,
+        tester.test_delete_custom_rule,
+        tester.test_delete_builtin_rule_fails,
+        tester.test_analytics_trends,
+        tester.test_webhook_config,
+        tester.test_update_webhook_config,
+        tester.test_github_actions_yaml,
+    ]
+    
+    all_tests = core_tests + new_feature_tests
     failed_tests = []
     
-    for test in tests:
+    print("🔧 Running Core Tests (for data generation)...")
+    print("-" * 50)
+    
+    for test in core_tests:
+        try:
+            if not test():
+                failed_tests.append(test.__name__)
+        except Exception as e:
+            print(f"❌ Test {test.__name__} crashed: {str(e)}")
+            failed_tests.append(test.__name__)
+    
+    print("\n🆕 Running New Feature Tests...")
+    print("-" * 50)
+    
+    for test in new_feature_tests:
         try:
             if not test():
                 failed_tests.append(test.__name__)
@@ -338,7 +617,7 @@ def main():
             failed_tests.append(test.__name__)
     
     # Print results
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 70)
     print(f"📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
     
     if failed_tests:

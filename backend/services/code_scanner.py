@@ -18,7 +18,7 @@ class CodeScanner:
             '.py': self.scan_python,
         }
     
-    async def scan_files(self, file_paths: List[str]) -> Dict:
+    async def scan_files(self, file_paths: List[str], custom_rules: List[Dict] = None) -> Dict:
         """Scan multiple files and aggregate results"""
         all_issues = []
         files_scanned = 0
@@ -29,6 +29,10 @@ class CodeScanner:
                 issues = await self.scanners[path.suffix](file_path)
                 all_issues.extend(issues)
                 files_scanned += 1
+            
+            if custom_rules:
+                custom_issues = self._apply_custom_rules(file_path, custom_rules)
+                all_issues.extend(custom_issues)
         
         summary = self._generate_summary(all_issues, files_scanned)
         
@@ -36,6 +40,44 @@ class CodeScanner:
             'summary': summary,
             'issues': all_issues
         }
+    
+    def _apply_custom_rules(self, file_path: str, custom_rules: List[Dict]) -> List[Dict]:
+        """Apply user-defined custom pattern rules"""
+        issues = []
+        path = Path(file_path)
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.read().split('\n')
+            
+            for rule in custom_rules:
+                pattern = rule.get('pattern')
+                file_types = rule.get('file_types', [])
+                
+                if file_types and path.suffix not in file_types:
+                    continue
+                
+                if not pattern:
+                    continue
+                
+                try:
+                    compiled = re.compile(pattern)
+                    for i, line in enumerate(lines, 1):
+                        if compiled.search(line):
+                            issues.append({
+                                'type': rule.get('name', 'custom_rule'),
+                                'severity': rule.get('severity', 'medium'),
+                                'file': path.name,
+                                'line': i,
+                                'message': rule.get('description', 'Custom rule violation'),
+                                'rule_id': rule.get('rule_id', 'custom')
+                            })
+                except re.error:
+                    pass
+        except Exception:
+            pass
+        
+        return issues
     
     def _generate_summary(self, issues: List[Dict], files_scanned: int) -> Dict:
         """Generate summary statistics"""
